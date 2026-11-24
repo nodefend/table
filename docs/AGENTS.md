@@ -10,7 +10,7 @@ Rubric: Part A 2.5 (literature .5, design/experiment 1.5, formatting/citations/A
 
 ## Kiến trúc
 
-Một repo, một PHP/MySQL application, hai giao diện. HTML5/CSS3/JS Fetch; PHP 8.x PDO; MySQL 8.x InnoDB; Long Polling. Không tự đổi stack. Document root `public/`. Luồng: browser -> PHP endpoint -> controller/service/repository (khi cần) -> DB -> response -> DOM. Không bắt buộc lớp rỗng hoặc framework chỉ để đủ cấu trúc.
+Một repo, một PHP/MySQL application, hai giao diện, một thương hiệu và 10 chi nhánh giả lập (5 địa phương). HTML5/CSS3/JS Fetch; PHP 8.x PDO; MySQL 8.x InnoDB; Long Polling. Không tự đổi stack. Document root `public/`. Luồng: browser -> PHP endpoint -> controller/service/repository (khi cần) -> DB -> response -> DOM. Không bắt buộc lớp rỗng hoặc framework chỉ để đủ cấu trúc.
 
 ```text
 TableFlow/
@@ -51,14 +51,18 @@ Các thư mục rỗng dùng .gitkeep. Main ban đầu chỉ có folder và file
 
 | Phần | TV1 — feature/customer-flow | TV2 — feature/staff-flow |
 |---|---|---|
-| Frontend | public/customer; xem/tìm bàn, đặt, xác nhận, tra cứu, menu | public/staff; login, dashboard, bàn, reservation, menu, orders |
+| Frontend | public/customer; chọn chi nhánh, xem/tìm bàn, đặt, xác nhận, tra cứu, menu; Explore Space, Smart Table, Smart Menu, Smart Branch, Reservation Journey | public/staff; login, Live Dashboard, Live Notification, Live Table Management, hóa đơn VIP, cập nhật reservation, menu (admin ghi), orders |
 | API | public/api/customer | public/api/staff |
-| Backend | customer controller/service/repository; kiểm tra overlap, ghi event | staff controller/service/repository; auth/session, quản lý trạng thái, đọc event |
+| Backend | customer controller/service/repository; kiểm tra overlap, ghi event | staff controller/service/repository; auth/session, kiểm tra branch scope, hóa đơn, quản lý trạng thái, đọc event |
 | Assets | customer.css, customer.js, images/customer | staff.css, staff.js, long-polling.js, images/staff |
 | Tests | tests/customer | tests/staff |
 | Benchmark | reload.php, fetch.php | long-polling.php |
 
 Cả hai: database, API contract, business rules, config, response/validation/events helpers, api.js, common.css, tests/integration, benchmark index/results và methodology, báo cáo/video. Thống nhất chủ sở hữu từng thay đổi file chung trước khi code để tránh conflict. Phân công theo chức năng end-to-end, không chỉ frontend/backend.
+
+## Phạm vi v2 đã chốt
+
+4 khu vực outdoor/indoor/vip/quiet; 29 bàn/chi nhánh, sức chứa 2/4/6/8; quiet chỉ 2/4. 36 món dùng chung, VIP +5% hóa đơn món/nước. Staff chỉ một chi nhánh; admin toàn hệ thống, chọn chi nhánh khi thao tác. Occasion Mode không làm riêng; Digital Ticket/QR, Revenue Analytics và Check-in bằng mã độc lập đã loại; thao tác check-in trong cập nhật trạng thái vẫn giữ. Smart Menu chỉ ước tính, không tạo order. Không mở rộng phạm vi tự ý.
 
 ## Trước khi tách branch
 
@@ -75,11 +79,11 @@ Cả hai: database, API contract, business rules, config, response/validation/ev
 
 ## Contract, bảo mật và chất lượng
 
-Đọc docs/DATABASE_SCHEMA.md, docs/BUSINESS_RULES.md, docs/API_CONTRACT.md trước khi code. Ba tài liệu cùng là baseline; nếu mâu thuẫn, báo nhóm, không tự chọn một bên. Đường dẫn API customer/staff tách riêng. Không hardcode hostname/port/secret; prepared statements; password_hash/password_verify; session/CSRF; validation server; escape HTML; lỗi JSON không lộ stack trace. Kiểm tra concurrency, transaction rollback, event ordering. Không dùng production data khi test. Giữ code đơn giản để sinh viên hiểu và sửa được.
+Đọc docs/DATABASE_SCHEMA.md, docs/BUSINESS_RULES.md, docs/API_CONTRACT.md trước khi code. Ba tài liệu cùng là baseline; nếu mâu thuẫn, báo nhóm, không tự chọn một bên. Đường dẫn API customer/staff tách riêng. Không hardcode hostname/port/secret; prepared statements; password_hash/password_verify; session/CSRF; validation server; escape HTML; lỗi JSON không lộ stack trace. Kiểm tra concurrency, transaction rollback, event ordering, branch scope, VIP fee và giới hạn khu vực quiet. Không dùng production data khi test. Giữ code đơn giản để sinh viên hiểu và sửa được.
 
 ## Benchmark
 
-Thiết kế ba chế độ cùng một dynamic feature: màn hình danh sách/sơ đồ bàn có cùng bộ lọc và cùng tập dữ liệu, thao tác refresh để thấy thay đổi trạng thái/đặt chỗ. Reload tải lại document; Fetch tải snapshot JSON và cập nhật DOM; Long Polling đợi event rồi cập nhật cùng snapshot. Có thể bổ sung thí nghiệm tìm bàn chủ động (Reload vs Fetch) nhưng không thay thế so sánh đủ ba phương pháp. Cùng browser, máy, DB, bộ lọc, cache policy, network conditions và thao tác; ghi rõ khác biệt trigger và waiting time. Đo payload theo cùng định nghĩa (ví dụ transferred bytes), TTFB từng request, DOM update behavior, tổng bytes/request count mỗi thao tác; tách long-poll wait khỏi server processing và đo event-to-UI nếu có. Đề xuất 30 lần/điều kiện nếu khả thi, ghi rõ warm-up, median và IQR; không bịa kết quả. Lưu raw data, screenshots, charts, methodology trong experiments/. Chỉ công bố số đo đã thu thật.
+Thiết kế ba chế độ cùng một dynamic feature: màn hình danh sách/sơ đồ bàn có cùng branch_id và cùng bộ lọc và cùng tập dữ liệu, thao tác refresh để thấy thay đổi trạng thái/đặt chỗ. Reload tải lại document; Fetch tải snapshot JSON và cập nhật DOM; Long Polling đợi event rồi cập nhật cùng snapshot. Có thể bổ sung thí nghiệm tìm bàn chủ động (Reload vs Fetch) nhưng không thay thế so sánh đủ ba phương pháp. Cùng browser, máy, DB, bộ lọc, cache policy, network conditions và thao tác; ghi rõ khác biệt trigger và waiting time. Đo payload theo cùng định nghĩa (ví dụ transferred bytes), TTFB từng request, DOM update behavior, tổng bytes/request count mỗi thao tác; tách long-poll wait khỏi server processing và đo event-to-UI nếu có. Đề xuất 30 lần/điều kiện nếu khả thi, ghi rõ warm-up, median và IQR; không bịa kết quả. Lưu raw data, screenshots, charts, methodology trong experiments/. Chỉ công bố số đo đã thu thật.
 
 ## Cách AI thực hiện nhiệm vụ
 
