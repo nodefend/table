@@ -1,1 +1,15 @@
 .env
+.env.*
+!.env.example
+
+/vendor/
+/node_modules/
+
+# File log và file tạm
+*.log
+*.tmp
+*.bak
+*.swp
+/cache/
+/tmp/
+/logs/
