@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/response.php';
+require_once __DIR__ . '/../config/database.php';
 
 function invalid_field(string $field, string $message): void
 {
@@ -83,7 +84,13 @@ function validate_booking_window(DateTimeImmutable $start, string $opening, stri
 {
     $now ??= new DateTimeImmutable('now', new DateTimeZone('UTC'));
     if ($start < $now) invalid_field('start_at', 'Không đặt bàn trong quá khứ.');
-    $end = $start->modify('+90 minutes');
+    $duration = filter_var(tf_config('RESERVATION_DURATION_MINUTES', '90'), FILTER_VALIDATE_INT, [
+        'options' => ['min_range' => 1, 'max_range' => 1440],
+    ]);
+    if ($duration === false) {
+        throw new RuntimeException('RESERVATION_DURATION_MINUTES must be an integer from 1 to 1440');
+    }
+    $end = $start->modify("+{$duration} minutes");
     $tz = new DateTimeZone('Asia/Ho_Chi_Minh');
     $local = $start->setTimezone($tz);
     $day = $local->format('Y-m-d');

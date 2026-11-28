@@ -17,7 +17,6 @@ function tf_config(string $key, ?string $default = null): string
     throw new RuntimeException('Missing environment configuration: ' . $key);
 }
 
-// Kết nối lazy, một PDO cho mỗi request. Không in lỗi hay mật khẩu ra browser.
 function db(): PDO
 {
     static $pdo = null;
@@ -27,7 +26,7 @@ function db(): PDO
     $name = tf_config('DB_NAME');
     $charset = tf_config('DB_CHARSET', 'utf8mb4');
     if (!preg_match('/^[a-zA-Z0-9_.:\[\]-]+$/D', $host) ||
-        !ctype_digit($port) || (int)$port < 1 || (int)$port > 65535 ||
+        !preg_match('/^[0-9]+$/D', $port) || (int)$port < 1 || (int)$port > 65535 ||
         !preg_match('/^[a-zA-Z0-9_]+$/D', $name) || $charset !== 'utf8mb4') {
         throw new RuntimeException('Invalid database configuration');
     }
@@ -56,3 +55,4 @@ function db_transaction(PDO $pdo, callable $work): mixed
         throw $e;
     }
 }
+
